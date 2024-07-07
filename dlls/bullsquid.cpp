@@ -171,33 +171,20 @@ void CSquidSpit::Touch(CBaseEntity* pOther)
 	}
 	else
 	{
-		int count = 0;
-		float dmgTime = 0.0f;
+		// Generate a random float between 0 and 1
+		float rand = RANDOM_FLOAT(0.0f, 1.0f);
 
-		while (count < 3) {
-			std::string globalTimeMsg = "Global Time: ";
-			std::string dmgTimeMsg = "DmgTime: ";
-
-			std::string globalTimeStr = std::to_string(gpGlobals->time);
-			std::string dmgTimeStr = std::to_string(dmgTime);
-
-			std::string globalTimeFull = globalTimeMsg.append(globalTimeStr);
-			std::string dmgTimeFull = dmgTimeMsg.append(dmgTimeStr);
-
-			ALERT(at_console, globalTimeFull.c_str());
-			ALERT(at_console, dmgTimeFull.c_str());
-
-			if (dmgTime > gpGlobals->time) 
-			{
-				continue;
-			}
-			else
-			{
-				//pOther->TakeDamage(pev, pev, gSkillData.bullsquidDmgSpit, DMG_ACID);
-				dmgTime = gpGlobals->time + 0.5;
-				++count;
-			}
+		// If the number is below 0.40 we apply the DoT (40%) with 3 ticks
+		if (rand < 0.40f)
+		{
+			pOther->Dot(pev, 3, gSkillData.bullsquidDmgSpit, DMG_ACID);
 		}
+		// Otherwise we just apply the DoT with 1 tick => Single damage
+		else 
+		{
+			pOther->Dot(pev, 1, gSkillData.bullsquidDmgSpit, DMG_GENERIC);
+		}
+		
 	}
 
 	SetThink(&CSquidSpit::SUB_Remove);
