@@ -222,7 +222,6 @@ public:
 
 	char m_szTeamName[TEAM_NAME_LENGTH];
 
-	virtual int GetDeathCount();
 	void Spawn() override;
 	void Pain();
 
@@ -315,7 +314,7 @@ public:
 	int GiveAmmo(int iAmount, const char* szName, int iMax) override;
 	void SendAmmoUpdate();
 	void SendSingleAmmoUpdate(int ammoIndex);
-
+	
 private:
 	void InternalSendSingleAmmoUpdate(int ammoIndex);
 	struct DotDamage
