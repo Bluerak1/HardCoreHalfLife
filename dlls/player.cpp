@@ -1805,6 +1805,28 @@ void CBasePlayer::UpdateStatusBar()
 
 void CBasePlayer::PreThink()
 {
+	// If the DoT is still active but we already ticked the required amount of time, we deactivate the DoT
+	if (dot.active && dot.tickCount >= dot.maxTicks)
+	{
+		dot.active = false;
+	}
+
+	if (dot.active)
+	{
+		// If the DoT is still active and the 1 second has passed we tick and increase the tick count
+		if (pev->dmgtime <= gpGlobals->time) {
+
+			// Take the damage
+			TakeDamage(dot.inflictor, dot.inflictor, dot.damage, dot.damageType);
+
+			// Set the next tick to 1 second from now
+			pev->dmgtime = gpGlobals->time + 1;
+
+			// Increase the tick count
+			++dot.tickCount;
+		}
+	}
+
 	int buttonsChanged = (m_afButtonLast ^ pev->button); // These buttons have changed this frame
 
 	// Debounced button codes for pressed/released

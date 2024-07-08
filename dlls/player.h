@@ -16,6 +16,7 @@
 #pragma once
 
 #include "pm_materials.h"
+#include "progdefs.h"
 
 
 #define PLAYER_FATAL_FALL_SPEED 1024															  // approx 60 feet
@@ -98,6 +99,22 @@ public:
 	int m_iObserverWeapon;	 // weapon of current tracked target
 	int m_iObserverLastMode; // last used observer mode
 	bool IsObserver() { return 0 != pev->iuser1; }
+
+	void Dot(entvars_t* inflictor, int maxTicks, float damage, int bitsDamageType) override
+	{
+		// Even if we already have a DoT this will reset it and start again from 0 ticks
+		
+		// We set the DoT to active
+		dot.active = true;
+
+		// Reset the tick count to 0 since we just got the DoT
+		dot.tickCount = 0;
+
+		dot.maxTicks = maxTicks;
+		dot.damage = damage;
+		dot.damageType = bitsDamageType;
+		dot.inflictor = inflictor;
+	}
 
 	int random_seed; // See that is shared between client & server for shared weapons code
 
@@ -301,6 +318,15 @@ public:
 
 private:
 	void InternalSendSingleAmmoUpdate(int ammoIndex);
+	struct DotDamage
+	{
+		int maxTicks;
+		int tickCount;
+		float damage;
+		int damageType;
+		entvars_t* inflictor;
+		bool active = false;
+	} dot;
 
 public:
 	void WaterMove();

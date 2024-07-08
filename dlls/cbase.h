@@ -167,6 +167,11 @@ public:
 	virtual bool Restore(CRestore& restore);
 	virtual int ObjectCaps() { return FCAP_ACROSS_TRANSITION; }
 	virtual void Activate() {}
+	virtual void Dot(entvars_t* inflictor, int times, float damage, int bitsDamageType) 
+	{
+		// By default we just take the damage, no need to DoT for non-player entities
+		TakeDamage(inflictor, inflictor, damage, bitsDamageType); 
+	}
 
 	// Setup the object->object collision box (pev->mins / pev->maxs is the object->world collision box)
 	virtual void SetObjectCollisionBox();
