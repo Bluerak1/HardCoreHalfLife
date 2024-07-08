@@ -2923,8 +2923,11 @@ void CBasePlayer::Spawn()
 		ALERT(at_console, "Seems like this is a new game... loading hardcore status.\n");
 
 		// If it's a new game we load the status from the file
-
 		HardCoreStatus::LoadHardCoreStatus();
+
+		// We also load the config for the mod
+		HardCoreStatus::LoadHardCoreConfig();
+
 		// Load the required map -- i.e. our last checkpoint
 		HardCoreStatus::LoadCheckPoint();
 	}
@@ -3828,6 +3831,43 @@ int CBasePlayer::GiveAmmo(int iCount, const char* szName, int iMax)
 		}
 	}
 
+	int randomAmtToDeduce = 0;
+	switch (HardCoreStatus::GetAmmoDifficulty())
+	{
+		// Keep the same amount as usual
+		case Difficulty::WALK_IN_THE_PARK:
+		{
+			randomAmtToDeduce = 0;
+		}
+		break;
+
+		// We remove some ammo between 0 and 25%
+		case Difficulty::MILD_CHALLENGE:
+		{
+			randomAmtToDeduce = RANDOM_LONG(0, iAdd * 0.25);
+		}
+		break;
+
+		// We remove some ammo between 25% and 50%
+		case Difficulty::HARD:
+		{
+			randomAmtToDeduce = RANDOM_LONG(iAdd * 0.25, iAdd * 50);
+		}
+		break;
+
+		// We remove some ammo between 50% and 95%
+		case Difficulty::TRUE_HARDCORE:
+		{
+			randomAmtToDeduce = RANDOM_LONG(iAdd * 0.50, iAdd * 0.95);
+		}
+		break;
+	}
+
+	const std::string debugMsg = "Deducing ammo with amount: " + std::to_string(randomAmtToDeduce) + "\n";
+	ALERT(at_console, debugMsg.c_str());
+
+	iAdd -= randomAmtToDeduce;
+
 	m_rgAmmo[i] += iAdd;
 
 
@@ -3836,7 +3876,7 @@ int CBasePlayer::GiveAmmo(int iCount, const char* szName, int iMax)
 		// Send the message that ammo has been picked up
 		MESSAGE_BEGIN(MSG_ONE, gmsgAmmoPickup, NULL, pev);
 		WRITE_BYTE(GetAmmoIndex(szName)); // ammo ID
-		WRITE_BYTE(iAdd);				  // amount
+		WRITE_BYTE(iAdd);				  // amount	
 		MESSAGE_END();
 	}
 

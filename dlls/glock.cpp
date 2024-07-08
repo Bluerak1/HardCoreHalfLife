@@ -19,6 +19,7 @@
 #include "monsters.h"
 #include "weapons.h"
 #include "player.h"
+#include "hardcorestatus.h"
 
 LINK_ENTITY_TO_CLASS(weapon_glock, CGlock);
 LINK_ENTITY_TO_CLASS(weapon_9mmhandgun, CGlock);
@@ -90,6 +91,21 @@ void CGlock::PrimaryAttack()
 
 void CGlock::GlockFire(float flSpread, float flCycleTime, bool fUseAutoAim)
 {
+	// TODO I implemented a Gun Jamming mechanism here but not sure if we want this, people might hate me for it :(
+	/* float rndFloat = RANDOM_FLOAT(0, 1);
+	if (rndFloat < 0.10 && m_iClip > 0)
+	{
+		int rand = RANDOM_FLOAT(1, 5);
+		const std::string gunJamMsg = "Glock Jammed! " + std::to_string(rand) + " seconds.";
+		HardCoreStatus::DisplayMsg(-1, -1, 2.0f, 1, gunJamMsg);
+		PlayEmptySound();
+		m_flNextPrimaryAttack = m_flNextSecondaryAttack = GetNextAttackDelay(rand);
+		m_iClip--;
+		PLAYBACK_EVENT_FULL(0, m_pPlayer->edict(), fUseAutoAim ? m_usFireGlock1 : m_usFireGlock2, 0.0, g_vecZero, g_vecZero, 0, 0, 0, 0, 1, 0);
+		return;
+	}
+	*/
+
 	if (m_iClip <= 0)
 	{
 		//if (m_fFireOnEmpty)
