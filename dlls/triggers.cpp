@@ -27,6 +27,7 @@
 #include "saverestore.h"
 #include "trains.h" // trigger_camera has train functionality
 #include "gamerules.h"
+#include "hardcorestatus.h"
 
 #define SF_TRIGGER_PUSH_START_OFF 2		   //spawnflag that makes trigger_push spawn turned OFF
 #define SF_TRIGGER_HURT_TARGETONCE 1	   // Only fire hurt target once
@@ -1527,6 +1528,10 @@ void CChangeLevel::ChangeLevelNow(CBaseEntity* pActivator)
 		gpGlobals->vecLandmarkOffset = VARS(pentLandmark)->origin;
 	}
 	//	ALERT( at_console, "Level touches %d levels\n", ChangeList( levels, 16 ) );
+
+	// We check if the checkpoint needs to be updated
+	HardCoreStatus::UpdateCheckPointIfNeeded(st_szNextMap);
+
 	ALERT(at_console, "CHANGE LEVEL: %s %s\n", st_szNextMap, st_szNextSpot);
 	CHANGE_LEVEL(st_szNextMap, st_szNextSpot);
 }

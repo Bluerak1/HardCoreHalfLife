@@ -22,12 +22,7 @@
 
 #include <limits>
 #include <algorithm>
-#include <fstream>
-#include <iostream>
 #include <string>
-
-#include <chrono>
-#include <thread>
 
 #include "extdll.h"
 #include "util.h"
@@ -47,7 +42,7 @@
 #include "hltv.h"
 #include "UserMessages.h"
 #include "client.h"
-
+#include "hardcorestatus.h"
 
 // #define DUCKFIX
 
@@ -152,12 +147,6 @@ TYPEDESCRIPTION CBasePlayer::m_playerSaveData[] =
 };
 
 LINK_ENTITY_TO_CLASS(player, CBasePlayer);
-
-static int deathCount = -1;
-
-static bool deathCountDisplayed = false;
-static bool isNewGame = true;
-static bool displayWelcomeMsg = false;
 
 void CBasePlayer::Pain()
 {
@@ -304,21 +293,6 @@ Vector CBasePlayer::GetGunPosition()
 	origin = pev->origin + pev->view_ofs;
 
 	return origin;
-}
-
-int CBasePlayer::GetDeathCount() {
-	if (deathCount == -1) 
-	{
-		// not initialised, we need to read
-		std::ifstream infile("D:\\deathCounter.txt");
-		int deathCountFromFile;
-		while (infile >> deathCountFromFile)
-		{
-			deathCount = deathCountFromFile;
-		}
-		
-	}
-	return deathCount;
 }
 
 //=========================================================
@@ -600,23 +574,11 @@ bool CBasePlayer::TakeDamage(entvars_t* pevInflictor, entvars_t* pevAttacker, fl
 			SetSuitUpdate("!HEV_HLTH1", false, SUIT_NEXT_IN_10MIN); // health dropping
 	}
 	
+	// We died (RIP)
 	if (pev->health <= 0)
 	{
-		// This probably could be removed but keep it here because why not
-		this->GetDeathCount();
-
-		++deathCount;
-
-		// TODO this is hardcoded for now
-		// truncate the file and overwrite the existing death count
-		std::ofstream outfile("D:\\deathCounter.txt", std::ios::trunc);
-		outfile << deathCount;
-		outfile.close();
-
-		std::string mapName = "c1a4";
-		SERVER_COMMAND(UTIL_VarArgs("map \"%s\"\n", mapName.c_str()));
-		deathCountDisplayed = false;
-		isNewGame = true;
+		// The `Death()` function will do everything that is needed
+		HardCoreStatus::Death();
 	}
 
 	return fTookDamage;
@@ -1989,63 +1951,8 @@ void CBasePlayer::PreThink()
 		pev->velocity = g_vecZero;
 	}
 
-	if (!deathCountDisplayed)
-	{
-		hudtextparms_s tTextParam;
-		tTextParam.x = 0.02;
-		tTextParam.y = 0.1;
-		tTextParam.effect = 0;
-		tTextParam.r1 = 255;
-		tTextParam.g1 = 255;
-		tTextParam.b1 = 255;
-		tTextParam.a1 = 255;
-		tTextParam.r2 = 255;
-		tTextParam.g2 = 255;
-		tTextParam.b2 = 255;
-		tTextParam.a2 = 255;
-		tTextParam.fadeinTime = 0;
-		tTextParam.fadeoutTime = 0;
-		tTextParam.holdTime = 99999.0f;
-		tTextParam.fxTime = 0;
-		tTextParam.channel = 1;
-
-		this->GetDeathCount();
-
-		std::string deathCountMsg = "Death Count: ";
-		std::string deathCountStr = std::to_string(deathCount);
-		std::string deathCountFull = deathCountMsg.append(deathCountStr);
-
-		UTIL_HudMessageAll(tTextParam, deathCountFull.c_str());
-
-		deathCountDisplayed = true;
-	}
-
-	if (displayWelcomeMsg)
-	{
-		hudtextparms_s tTextParam;
-		tTextParam.x = -1;
-		tTextParam.y = -1;
-		tTextParam.effect = 0;
-		tTextParam.r1 = 255;
-		tTextParam.g1 = 255;
-		tTextParam.b1 = 255;
-		tTextParam.a1 = 255;
-		tTextParam.r2 = 255;
-		tTextParam.g2 = 255;
-		tTextParam.b2 = 255;
-		tTextParam.a2 = 255;
-		tTextParam.fadeinTime = 0.4;
-		tTextParam.fadeoutTime = 0.3;
-		tTextParam.holdTime = 2;
-		tTextParam.fxTime = 0;
-		tTextParam.channel = 2;
-
-		std::string goodLuckMsg = "Good luck!";
-
-		UTIL_HudMessageAll(tTextParam, goodLuckMsg.c_str());
-		this->GiveNamedItem("item_suit");
-		displayWelcomeMsg = false;
-	}
+	HardCoreStatus::DisplayDeathCountIfNotDisplayed();
+	HardCoreStatus::DisplayWelcomeMessageIfNotDisplayed();
 }
 /* Time based Damage works as follows: 
 	1) There are several types of timebased damage:
@@ -2907,6 +2814,8 @@ ReturnSpot:
 
 void CBasePlayer::Spawn()
 {
+	HardCoreStatus::GiveCheckpointItemsIfNeeded(this);
+
 	m_bIsSpawning = true;
 
 	//Make sure this gets reset even if somebody adds an early return or throws an exception.
@@ -3008,13 +2917,16 @@ void CBasePlayer::Spawn()
 
 	g_pGameRules->PlayerSpawn(this);
 
-	if (isNewGame) {
-		std::string mapName = "c1a4";
-		SERVER_COMMAND(UTIL_VarArgs("map \"%s\"\n", mapName.c_str()));
-		this->GiveNamedItem("item_suit");
-		deathCountDisplayed = false;
-		isNewGame = false;
-		displayWelcomeMsg = true;
+	// If we haven't loaded the hardcore status file it means this is a new game
+	if (!HardCoreStatus::IsHardCoreStatusLoaded())
+	{
+		ALERT(at_console, "Seems like this is a new game... loading hardcore status.\n");
+
+		// If it's a new game we load the status from the file
+
+		HardCoreStatus::LoadHardCoreStatus();
+		// Load the required map -- i.e. our last checkpoint
+		HardCoreStatus::LoadCheckPoint();
 	}
 }
 

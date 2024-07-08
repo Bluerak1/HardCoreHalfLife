@@ -17,6 +17,7 @@
 
 #include "pm_materials.h"
 #include "progdefs.h"
+#include <string>
 
 
 #define PLAYER_FATAL_FALL_SPEED 1024															  // approx 60 feet
@@ -61,6 +62,14 @@
 #define SOUND_FLASHLIGHT_OFF "items/flashlight1.wav"
 
 #define TEAM_NAME_LENGTH 16
+
+#define DEATH_COUNT_STATUS_TEXT "dc"
+#define CHECKPOINT_STATUS_TEXT "cp"
+
+#define MOD_STARTING_LEVEL "c1a1"
+#define DELIMITER ":"
+#define DEATH_COUNT_TEXT "Death Count"
+#define WELCOME_MSG "Good Luck!"
 
 typedef enum
 {
@@ -222,6 +231,7 @@ public:
 
 	char m_szTeamName[TEAM_NAME_LENGTH];
 
+	virtual int GetDeathCount();
 	void Spawn() override;
 	void Pain();
 
@@ -314,7 +324,7 @@ public:
 	int GiveAmmo(int iAmount, const char* szName, int iMax) override;
 	void SendAmmoUpdate();
 	void SendSingleAmmoUpdate(int ammoIndex);
-	
+
 private:
 	void InternalSendSingleAmmoUpdate(int ammoIndex);
 	struct DotDamage
@@ -326,6 +336,175 @@ private:
 		entvars_t* inflictor;
 		bool active = false;
 	} dot;
+
+	struct HardcoreStatus
+	{
+		int deathCount = 0;
+		std::string lastCheckpoint = MOD_STARTING_LEVEL;
+		bool isDeathCountDisplayed = false;
+		bool isWelcomeMessageDisplayed = false;
+		bool hardcoreStatusLoaded = false;
+
+		/*
+		* This function loads the current hardcore status from the "status.hlhc file".
+		* If this file doesn't exist it will create it and populate with default values:
+		*	- Checkpoint: c1a1 -- Basically the starting point of the mod
+		*	- Death Count: 0 -- The player hasn't died yet or at least that we know of
+		*/
+		void LoadHardCoreStatus() 
+		{
+
+			// If we already loaded the status we don't do it again
+			if (hardcoreStatusLoaded) {
+				ALERT(at_console, "HardCore Status is already loaded!");
+				return;
+			}
+
+			// read the file as inputStream
+			std::ifstream inFile("status.hlhc");
+
+			// File doesn't exist
+			if (inFile.fail())
+			{
+				// File doesn't exist so we create it
+				// Write 0 death count since we have no historic death data
+				// Write MOD_STARTING_LEVEL as the checkpoint since this is the starting point of the mod
+				UpdateHardCoreStatusFile(0, MOD_STARTING_LEVEL);
+			}
+			// File exists
+			else
+			{
+				// File exists so we read and process it line-by-line
+				std::string fileLine;
+				while (inFile >> fileLine)
+				{
+					// File structure is "<key>:<value>" so we split the file line to <key> and <value>
+					std::string key = fileLine.substr(0, fileLine.find(DELIMITER));
+					std::string value = fileLine.substr(fileLine.find(DELIMITER), fileLine.length());
+
+					// We log a few debug messages just in case
+					std::string keyDebugMsg = "Found key: " + key;
+					std::string valueDebugMsg = "Value key: " + value;
+
+					ALERT(at_console, keyDebugMsg.c_str());
+					ALERT(at_console, valueDebugMsg.c_str());
+
+					if (key == DEATH_COUNT_STATUS_TEXT) 
+					{
+						// If the key is "dc" then we know it is the death count number
+						std::string deathCountDebugMsg = "Setting death count to: " + value;
+						ALERT(at_console, deathCountDebugMsg.c_str());
+
+						// Set the death count to the one from the file
+						deathCount = atoi(value.c_str());
+					}
+					else if (key == CHECKPOINT_STATUS_TEXT) 
+					{
+						// If the key is "cp" then we know it is the checkpoint
+						std::string checkpointDebugMsg = "Setting last checkpoint to: " + value;
+						ALERT(at_console, checkpointDebugMsg.c_str());
+
+						// Set the checkpoint to the one from the file
+						lastCheckpoint = value;
+					}
+					else
+					{
+						// Currently we only have "cp" and "dc" keys in the file so if we find anything else we just log it as an error
+						std::string errorMsg = "Unknown key in status file: " + key;
+						ALERT(at_console, errorMsg.c_str());
+					}
+				}
+
+				// Close the input stream
+				inFile.close();
+			}
+
+			// We indicate that the hardcore status file was loaded, no need to load it again
+			hardcoreStatusLoaded = true;
+		}
+
+		/*
+		 * Display the death count message to the top left of the screen.
+		 */
+		void DisplayDeathCount() 
+		{
+
+			// This will expand to "Death Count: X"
+			std::string deathCountMsg = std::string(DEATH_COUNT_TEXT) + std::string(DELIMITER) + " " + std::to_string(deathCount);
+
+			// - Top left corner of the screen
+			// - Display for 99999 seconds (until death)
+			// - Display Death Count: text
+			DisplayMsg(0.02, 0.1, 99999.0f, 1, deathCountMsg);
+
+			// Tell the PreThink() function that we have this displayed so no need to re-display
+			isDeathCountDisplayed = true;
+		}
+
+		/*
+		 * Display the welcome message to the middle of the screen.
+		 */
+		void DisplayWelcomeMessage() 
+		{
+			// - Middle of the screen
+			// - Display for 2 seconds
+			// - Display Good Luck!
+			DisplayMsg(-1, -1, 2.0f, 2, WELCOME_MSG);
+
+			// Tell the PreThink() function that we have this displayed so no need to re-display
+			isWelcomeMessageDisplayed = true;
+		}
+
+		private:
+			/*
+			* This is just a helper function to display a text message to the HUD with the given parameters.
+			* It's private because it will only be called from a player object. Shouldn't be visible to the outside.
+			*/
+			void DisplayMsg(const float textXCoord, const float textYCoord, const float displayTime, const int channel, const std::string& textToDisplay) 
+			{
+				hudtextparms_s tTextParam;
+				tTextParam.x = textXCoord;
+				tTextParam.y = textYCoord;
+				tTextParam.effect = 0;
+				tTextParam.r1 = 255;
+				tTextParam.g1 = 255;
+				tTextParam.b1 = 255;
+				tTextParam.a1 = 255;
+				tTextParam.r2 = 255;
+				tTextParam.g2 = 255;
+				tTextParam.b2 = 255;
+				tTextParam.a2 = 255;
+				tTextParam.fadeinTime = 0;
+				tTextParam.fadeoutTime = 0;
+				tTextParam.holdTime = displayTime;
+				tTextParam.fxTime = 0;
+				tTextParam.channel = channel;
+
+				UTIL_HudMessageAll(tTextParam, textToDisplay.c_str());
+			}
+
+			/*
+			 * This is just a helper function to update the hardcore status file.
+			 * This means truncating the file and rewriting the two lines:
+			 *	- "dc":100 -- Death Count line
+			 *  - "cp": "c1a1" -- Checkpoint line
+			 * 
+			 * It's private because it will only be called from a player object. Shouldn't be visible to the outside.
+			 */
+			void UpdateHardCoreStatusFile(const int deathCount, const std::string& checkpoint)
+			{
+				std::ofstream outFile("status.hlhc");
+
+				// Write death count line
+				outFile << DEATH_COUNT_STATUS_TEXT << DELIMITER << deathCount << std::endl;
+
+				// Write checkpoint line
+				outFile << CHECKPOINT_STATUS_TEXT << DELIMITER << checkpoint << std::endl;
+
+				outFile.close();
+			}
+
+	} hcStatus;
 
 public:
 	void WaterMove();
