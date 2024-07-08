@@ -100,14 +100,15 @@ void HardCoreStatus::LoadCheckPoint()
 void HardCoreStatus::UpdateCheckPointIfNeeded(const std::string& mapName)
 {
 	// If the map we transitioned to is the same as our checkpoint we do nothing
-	//if (mapName == hcData.lastCheckpoint) {
-	//	return;
-	//}
+	if (mapName == hcData.lastCheckpoint) {
+		return;
+	}
 
 	// Check if the map we transitioned to is a checkpoint
-	if (std::find(possibleCheckpoints.begin(), possibleCheckpoints.end(), mapName) != possibleCheckpoints.end())
+	// Check if our checkpoint difficulty is ON or BELOW the checkpoint's difficulty, if yes we save the checkpoint!
+	if (hcConfig.checkpointDifficulty <= checkpointMap[mapName].first)
 	{
-		const std::string ckpDebugMsg = "Player transitioned to " + mapName + " this is a checkpoint.";
+		const std::string ckpDebugMsg = "Player transitioned to " + mapName + " this is a checkpoint.\n";
 		ALERT(at_console, ckpDebugMsg.c_str());
 
 		// The Map we transitioned to is in the checkpoint list so we need to update the checkpoint
@@ -117,8 +118,11 @@ void HardCoreStatus::UpdateCheckPointIfNeeded(const std::string& mapName)
 		UpdateHardCoreStatusFile();
 
 		// Display the message
-		DisplayMsg(-1, -0.5, 10.0f, 1, "Checkpoint Reached!");
+		DisplayMsg(-1, -0.5, 5.0f, 1, "Checkpoint Reached!");
 	}
+
+	// TODO We should somehow order the checkpoints to make sure we don't update the checkpoint if the player goes back?
+	// IDK maybe this is not even a problem... not my problem if they go back lol
 }
 
 /*
@@ -134,7 +138,7 @@ void HardCoreStatus::UpdateHardCoreStatusFile()
 	ALERT(at_console, "Updating HardCore Status file...\n");
 
 	// Open the file as an outputstream, this will create it if it doesn't exist yet
-	std::ofstream outFile("D:\\status.hlhc");
+	std::ofstream outFile("status.hlhc");
 
 	// Write death count line
 	outFile << DEATH_COUNT_STATUS_TEXT << DELIMITER << hcData.deathCount << std::endl;
@@ -165,7 +169,7 @@ void HardCoreStatus::LoadHardCoreStatus()
 
 	// read the file as inputStream#
 	// FIXME This is hardcoded!!! Should be configurable.
-	std::ifstream inFile("D:\\status.hlhc");
+	std::ifstream inFile("status.hlhc");
 
 	// File doesn't exist
 	if (inFile.fail())
@@ -264,7 +268,7 @@ void HardCoreStatus::GiveCheckpointItemsIfNeeded(CBasePlayer* plr)
 	}
 
 	// Get the items associated with the checkpoint
-	std::vector<std::string> itemsToGive = checkpointItemMap[hcData.lastCheckpoint];
+	std::vector<std::string> itemsToGive = checkpointMap[hcData.lastCheckpoint].second;
 
 	// Check if we have no items
 	if (itemsToGive.empty())
@@ -280,11 +284,102 @@ void HardCoreStatus::GiveCheckpointItemsIfNeeded(CBasePlayer* plr)
 	{
 		const std::string itemMsg = "Giving item: " + item + "\n";
 		ALERT(at_console, itemMsg.c_str());
-		plr->GiveNamedItem(item.c_str());
+		SERVER_COMMAND(UTIL_VarArgs("give \"%s\"\n", item.c_str()));
 	}
 
 	// Set the has items flag to true
 	hcData.hasCheckpointItems = true;
+}
+
+// TODO: This function is very similar to the status load, we should have a common function for file opening/reading
+void HardCoreStatus::LoadHardCoreConfig()
+{
+	// If we already loaded the config we don't do it again
+	if (hcData.hardcoreConfigLoaded)
+	{
+		ALERT(at_console, "HardCore Config is already loaded!\n");
+		return;
+	}
+
+	// read the file as inputStream
+	// FIXME This is hardcoded!!! Should be configurable.
+	std::ifstream inFile("config.hlhc");
+
+	// File doesn't exist
+	if (inFile.fail())
+	{
+		ALERT(at_console, "HardCore Config file not found, creating!\n");
+
+		// Open the file as an outputstream, this will create it if it doesn't exist yet
+		std::ofstream outFile("config.hlhc");
+
+		// Set everything to TRUE_HARDCORE if no config is present
+		outFile << CKP_DIFF << DELIMITER << "TRUE_HARDCORE" << std::endl;
+		outFile << AMMO_DIFF << DELIMITER << "TRUE_HARDCORE" << std::endl;
+		outFile << ENEMY_DIFF << DELIMITER << "TRUE_HARDCORE" << std::endl;
+
+		outFile.close();
+
+		ALERT(at_console, "HardCore Config file updated.\n");
+	}
+	else
+	{
+		ALERT(at_console, "HardCore Config file found, loading...\n");
+
+		// File exists so we read and process it line-by-line
+		std::string fileLine;
+		while (inFile >> fileLine)
+		{
+			// File structure is "<key>:<value>" so we split the file line to <key> and <value>
+			std::string key = fileLine.substr(0, fileLine.find(DELIMITER));
+			std::string value = fileLine.substr(fileLine.find(DELIMITER) + 1, fileLine.length());
+
+			// We log a few debug messages just in case
+			std::string keyDebugMsg = "Found key: " + key + "\n";
+			std::string valueDebugMsg = "Value key: " + value + "\n";
+
+			ALERT(at_console, keyDebugMsg.c_str());
+			ALERT(at_console, valueDebugMsg.c_str());
+
+			if (key == CKP_DIFF)
+			{
+				std::string deathCountDebugMsg = "Setting Checkpoint Difficulty to: " + value + "\n";
+				ALERT(at_console, deathCountDebugMsg.c_str());
+
+				// Set the Checkpoint Difficulty to the one from the file
+				hcConfig.checkpointDifficulty = difficultyRepresentation[value];
+			}
+			else if (key == AMMO_DIFF)
+			{
+				std::string checkpointDebugMsg = "Setting Ammo Difficulty to: " + value + "\n";
+				ALERT(at_console, checkpointDebugMsg.c_str());
+
+				// Set the Ammo Difficulty to the one from the file
+				hcConfig.ammoDifficulty = difficultyRepresentation[value];
+			}
+			else if (key == ENEMY_DIFF)
+			{
+				std::string checkpointDebugMsg = "Setting Enemy Difficulty to: " + value + "\n";
+				ALERT(at_console, checkpointDebugMsg.c_str());
+
+				// Set the Enemy Difficulty to the one from the file
+				hcConfig.enemyDifficulty = difficultyRepresentation[value];
+			}
+			else
+			{
+				std::string errorMsg = "Unknown key in config file: " + key + "\n";
+				ALERT(at_console, errorMsg.c_str());
+			}
+		}
+
+		ALERT(at_console, "HardCore Config file loaded.\n");
+
+		// Close the input stream
+		inFile.close();
+	}
+
+	// We indicate that the hardcore status file was loaded, no need to load it again
+	hcData.hardcoreConfigLoaded = true;
 }
 
 // Set the defaults for the hardcore data
@@ -297,24 +392,101 @@ HardCoreStatusData HardCoreStatus::hcData = {
 	false
 };
 
-// This is a map that associates checkpoints with the items that should be given when respawning at that given checkpoint
-// For example at the first checkpoint Gordon has nothing except for the suit
-std::map<std::string, std::vector<std::string>> HardCoreStatus::checkpointItemMap = {
-	{ 
+// Stores the checkpoint name (map) and the difficulty and items associated with it.
+// For Example:
+// Blast Pit -> Pair(MILD_CHALLENGE, {crowbar, suit, shotgun, glock})
+std::map<std::string, std::pair<Difficulty, std::vector<std::string>>> HardCoreStatus::checkpointMap = {
+
+	{
+		// Resonance Cascade available on all difficulties
 		// For the first checkpoint we only need the suit
-		"c1a1", std::vector<std::string>{"item_suit"}
+		"c1a1",
+		std::pair<Difficulty, std::vector<std::string>>(Difficulty::TRUE_HARDCORE, 
+			{"item_suit"}
+		)
+	},
+
+	{
+		// Blast Pit available on MILD_CHALLENGE
+		"c1a4",
+		std::pair<Difficulty, std::vector<std::string>>(Difficulty::MILD_CHALLENGE, 
+			{"item_suit"}
+		)
+	},
+	{
+		// ON A RAIL available on MILD_CHALLENGE
+		"c2a2",
+		std::pair<Difficulty, std::vector<std::string>>(Difficulty::MILD_CHALLENGE, 
+			{"item_suit"}
+		)
+	},
+	{
+		// Power Up available on WALK_IN_THE_PARK
+		"c2a1",
+		std::pair<Difficulty, std::vector<std::string>>(Difficulty::WALK_IN_THE_PARK, 
+			{"item_suit"}
+		)
+	},
+	{
+		// Apprehension available on HARD
+		"c2a3",
+		std::pair<Difficulty, std::vector<std::string>>(Difficulty::HARD, 
+			{"item_suit"}
+		)
+	},
+	{
+		// Surface Tension available on MILD_CHALLENGE
+		"c2a5",
+		std::pair<Difficulty, std::vector<std::string>>(Difficulty::MILD_CHALLENGE, 
+			{"item_suit"}
+		)
+	},
+	{
+		// Lambda Core available on WALK_IN_THE_PARK
+		"c3a2e", 
+		std::pair<Difficulty, std::vector<std::string>>(Difficulty::HARD,
+			{"item_suit"}
+		)
+	},
+	{
+		// Xen available on HARD
+		"c4a1",
+		std::pair<Difficulty, std::vector<std::string>>(Difficulty::HARD, 
+			{"item_suit"}
+		)
+	},
+	{
+		// Interloper available on MILD_CHALLENGE
+		"c4a1a",
+		std::pair<Difficulty, std::vector<std::string>>(Difficulty::MILD_CHALLENGE, 
+			{"item_suit"}
+		)
 	}
-	// TODO Populate for other checkpoints and potentially make it configurable in the future?
 };
 
-std::vector<std::string> HardCoreStatus::possibleCheckpoints = std::vector<std::string>
-{
-	"c1a1", // Resonance Cascade
-	"c1a4", // Blast Pit
-	"c2a3", // Apprehension
-	"c2a5", // Surface Tension
-	"c4a1a", // Interloper
-	"c4a1" // Xen
+// By default it's true hardcore
+HardCoreConfig HardCoreStatus::hcConfig = {
+	TRUE_HARDCORE,
+	TRUE_HARDCORE,
+	TRUE_HARDCORE
+};
 
-	// TODO Review if these are enough or potentially make it configurable in the future?
+// This is only used for mapping
+std::map<std::string, Difficulty> HardCoreStatus::difficultyRepresentation = {
+	{
+		"WALK_IN_THE_PARK",
+		Difficulty::WALK_IN_THE_PARK
+	},
+	{
+		"MILD_CHALLENGE",
+		Difficulty::MILD_CHALLENGE
+	},
+	{
+		"HARD",
+		Difficulty::HARD
+	},
+	{
+		"TRUE_HARDCORE",
+		Difficulty::TRUE_HARDCORE
+	}
 };

@@ -21,6 +21,18 @@
 #define DEATH_COUNT_TEXT "Death Count"
 #define WELCOME_MSG "Good Luck!"
 
+#define CKP_DIFF "checkpoint_difficulty"
+#define AMMO_DIFF "ammo_difficulty"
+#define ENEMY_DIFF "enemy_difficulty"
+
+enum Difficulty
+{
+	WALK_IN_THE_PARK,
+	MILD_CHALLENGE,
+	HARD,
+	TRUE_HARDCORE
+};
+
 /*
  * This is a data structure representing the current HardCore Status:
  * - deathCount
@@ -38,35 +50,54 @@ struct HardCoreStatusData
 	bool isDeathCountDisplayed = false;
 	bool isWelcomeMessageDisplayed = false;
 	bool hardcoreStatusLoaded = false;
+	bool hardcoreConfigLoaded = false;
 	bool hasCheckpointItems = false;
+};
+
+struct HardCoreConfig
+{
+	Difficulty checkpointDifficulty;
+	Difficulty ammoDifficulty;
+	Difficulty enemyDifficulty;
 };
 
 class HardCoreStatus
 {
 	public:
+		static void LoadHardCoreStatus();
+		static void LoadHardCoreConfig();
+
+		static void UpdateHardCoreStatusFile();
+
 		static void LoadCheckPoint();
 		static void UpdateCheckPointIfNeeded(const std::string& mapName);
-		static void UpdateHardCoreStatusFile();
-		static void LoadHardCoreStatus();
+		static void GiveCheckpointItemsIfNeeded(CBasePlayer* plr);
+		
 		static void Death();
+
 		static void DisplayDeathCountIfNotDisplayed();
 		static void DisplayWelcomeMessageIfNotDisplayed();
-		static void GiveCheckpointItemsIfNeeded(CBasePlayer* plr);
-
+		
 		/* This will just return the hardcoreStatusLoaded to avoid exposing the whole data */
-		static bool IsHardCoreStatusLoaded()
+		static const bool IsHardCoreStatusLoaded()
 		{
 			return hcData.hardcoreStatusLoaded;
 		}
 
-	private:
-		/*
-		 * Please note that this is STATIC because we only want a single instance of this status throughout the whole game.
-		 */
-		static HardCoreStatusData hcData;
-
-		static std::map<std::string, std::vector<std::string>> checkpointItemMap;
-		static std::vector<std::string> possibleCheckpoints;
+		static const Difficulty GetAmmoDifficulty()
+		{
+			return hcConfig.ammoDifficulty;
+		}
 
 		static void DisplayMsg(const float textXCoord, const float textYCoord, const float displayTime, const int channel, const std::string& textToDisplay);
+
+	private:
+		/*
+		 * Please note that these are STATIC because we only want a single instance of this status throughout the whole game.
+		 */
+		static HardCoreStatusData hcData;
+		static HardCoreConfig hcConfig;
+		static std::map<std::string, std::pair<Difficulty, std::vector<std::string>>> checkpointMap;
+
+		static std::map<std::string, Difficulty> difficultyRepresentation;
 };
