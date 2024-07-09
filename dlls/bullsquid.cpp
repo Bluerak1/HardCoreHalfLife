@@ -97,7 +97,7 @@ void CSquidSpit::Spawn()
 	// On Hard there's a 50% chance for a bigger spit
 	if (enemyDiff == HARD && randFloat < 0.50)
 	{
-		ALERT(at_console, "Bullchicken spit bigger! HARD diff");
+		ALERT(at_console, "Bullchicken spit bigger! HARD diff\n");
 		sizeMultiplier = 2;
 		min = Vector(-28, -28, 0);
 		max = Vector(28, 28, 28);
@@ -105,7 +105,7 @@ void CSquidSpit::Spawn()
 	// On HardCore there's a 80% chance for a bigger spit
 	else if (enemyDiff == TRUE_HARDCORE && randFloat < 0.80)
 	{
-		ALERT(at_console, "Bullchicken spit bigger! HARDCORE diff");
+		ALERT(at_console, "Bullchicken spit bigger! HARDCORE diff\n");
 		sizeMultiplier = 2;
 		min = Vector(-28, -28, 0);
 		max = Vector(28, 28, 28);
@@ -152,21 +152,21 @@ void CSquidSpit::Shoot(entvars_t* pevOwner, Vector vecStart, Vector vecVelocity)
 	// And it becomes 1.8-2 times faster
 	if (enemyDiff == MILD_CHALLENGE && randFloat < 0.30)
 	{
-		ALERT(at_console, "Bullchicken spit faster! MILD_CHALLENGE diff");
+		ALERT(at_console, "Bullchicken spit faster! MILD_CHALLENGE diff\n");
 		speedMultiplier = RANDOM_FLOAT(1.8, 2);
 	}
 	// On Hard there's a 50% chance for a faster spit
 	// And it becomes 2-2.5 times faster
 	else if (enemyDiff == HARD && randFloat < 0.50)
 	{
-		ALERT(at_console, "Bullchicken spit faster! HARD diff");
+		ALERT(at_console, "Bullchicken spit faster! HARD diff\n");
 		speedMultiplier = RANDOM_FLOAT(2, 2.5);
 	}
 	// On HardCore there's a 75% chance for a faster spit
 	// And it becomes 2-4 times faster
 	else if (enemyDiff == TRUE_HARDCORE && randFloat < 0.75)
 	{
-		ALERT(at_console, "Bullchicken spit faster! TRUE_HARDCORE diff");
+		ALERT(at_console, "Bullchicken spit faster! TRUE_HARDCORE diff\n");
 		speedMultiplier = RANDOM_FLOAT(2, 4);
 	}
 
