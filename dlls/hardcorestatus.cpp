@@ -317,7 +317,7 @@ void HardCoreStatus::LoadHardCoreConfig()
 
 		// Set everything to TRUE_HARDCORE if no config is present
 		outFile << CKP_DIFF << DELIMITER << "TRUE_HARDCORE" << std::endl;
-		outFile << AMMO_DIFF << DELIMITER << "TRUE_HARDCORE" << std::endl;
+		outFile << PICKUP_DIFF << DELIMITER << "TRUE_HARDCORE" << std::endl;
 		outFile << ENEMY_DIFF << DELIMITER << "TRUE_HARDCORE" << std::endl;
 
 		outFile.close();
@@ -351,13 +351,13 @@ void HardCoreStatus::LoadHardCoreConfig()
 				// Set the Checkpoint Difficulty to the one from the file
 				hcConfig.checkpointDifficulty = difficultyRepresentation[value];
 			}
-			else if (key == AMMO_DIFF)
+			else if (key == PICKUP_DIFF)
 			{
 				std::string checkpointDebugMsg = "Setting Ammo Difficulty to: " + value + "\n";
 				ALERT(at_console, checkpointDebugMsg.c_str());
 
 				// Set the Ammo Difficulty to the one from the file
-				hcConfig.ammoDifficulty = difficultyRepresentation[value];
+				hcConfig.pickupDifficulty = difficultyRepresentation[value];
 			}
 			else if (key == ENEMY_DIFF)
 			{

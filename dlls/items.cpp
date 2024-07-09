@@ -225,7 +225,7 @@ class CItemBattery : public CItem
 			int pct;
 			char szcharge[64];
 
-			Difficulty pickupDiff = HardCoreStatus::GetAmmoDifficulty();
+			Difficulty pickupDiff = HardCoreStatus::GetPickupDifficulty();
 
 			float batteryMultiplier = 1.0;
 

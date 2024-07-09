@@ -98,7 +98,7 @@ void CRecharge::Spawn()
 	pev->frame = 0;
 
 	float randOff = RANDOM_FLOAT(0, 1);
-	Difficulty diff = HardCoreStatus::GetAmmoDifficulty();
+	Difficulty diff = HardCoreStatus::GetPickupDifficulty();
 
 	// On mild challenge there's a 20% chance for HP chargers to be off
 	if (diff == MILD_CHALLENGE && randOff < 0.20)
