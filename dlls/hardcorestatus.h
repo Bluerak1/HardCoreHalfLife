@@ -22,7 +22,7 @@
 #define WELCOME_MSG "Good Luck!"
 
 #define CKP_DIFF "checkpoint_difficulty"
-#define AMMO_DIFF "ammo_difficulty"
+#define PICKUP_DIFF "pickup_difficulty"
 #define ENEMY_DIFF "enemy_difficulty"
 
 enum Difficulty
