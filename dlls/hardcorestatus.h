@@ -49,9 +49,12 @@ struct HardCoreStatusData
 
 	bool isDeathCountDisplayed = false;
 	bool isWelcomeMessageDisplayed = false;
+
 	bool hardcoreStatusLoaded = false;
 	bool hardcoreConfigLoaded = false;
+
 	bool hasCheckpointItems = false;
+	bool playerDead = false;
 };
 
 struct HardCoreConfig
@@ -92,6 +95,12 @@ class HardCoreStatus
 		static const Difficulty GetEnemyDifficulty()
 		{
 			return hcConfig.enemyDifficulty;
+		}
+
+		// This will only be true if player died
+		static const bool IsPlayerDead()
+		{
+			return hcData.playerDead;
 		}
 
 		static void DisplayMsg(const float textXCoord, const float textYCoord, const float displayTime, const int channel, const std::string& textToDisplay);

@@ -579,6 +579,8 @@ bool CBasePlayer::TakeDamage(entvars_t* pevInflictor, entvars_t* pevAttacker, fl
 	{
 		// The `Death()` function will do everything that is needed
 		HardCoreStatus::Death();
+		// Wait 3 seconds before we respawn
+		pev->dmgtime = gpGlobals->time + 3;
 	}
 
 	return fTookDamage;
@@ -1767,6 +1769,21 @@ void CBasePlayer::UpdateStatusBar()
 
 void CBasePlayer::PreThink()
 {
+	// If player is dead
+	if (HardCoreStatus::IsPlayerDead())
+	{
+		// And the 3 seconds passed we respawn
+		if (pev->dmgtime <= gpGlobals->time)
+		{
+			HardCoreStatus::LoadCheckPoint();
+		}
+		// Otherwise we block the "think" so the player can't press any buttons etc.
+		else
+		{
+			return;
+		}
+	}
+
 	// If the DoT is still active but we already ticked the required amount of time, we deactivate the DoT
 	if (dot.active && dot.tickCount >= dot.maxTicks)
 	{
