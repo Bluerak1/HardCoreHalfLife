@@ -391,6 +391,7 @@ HardCoreStatusData HardCoreStatus::hcData = {
 	false,
 	false,
 	false,
+	false,
 	false
 };
 
