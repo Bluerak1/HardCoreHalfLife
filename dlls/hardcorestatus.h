@@ -60,7 +60,7 @@ struct HardCoreStatusData
 struct HardCoreConfig
 {
 	Difficulty checkpointDifficulty;
-	Difficulty ammoDifficulty;
+	Difficulty pickupDifficulty;
 	Difficulty enemyDifficulty;
 };
 
@@ -87,9 +87,9 @@ class HardCoreStatus
 			return hcData.hardcoreStatusLoaded;
 		}
 
-		static const Difficulty GetAmmoDifficulty()
+		static const Difficulty GetPickupDifficulty()
 		{
-			return hcConfig.ammoDifficulty;
+			return hcConfig.pickupDifficulty;
 		}
 
 		static const Difficulty GetEnemyDifficulty()

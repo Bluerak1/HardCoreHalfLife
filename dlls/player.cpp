@@ -3849,7 +3849,7 @@ int CBasePlayer::GiveAmmo(int iCount, const char* szName, int iMax)
 	}
 
 	int randomAmtToDeduce = 0;
-	switch (HardCoreStatus::GetAmmoDifficulty())
+	switch (HardCoreStatus::GetPickupDifficulty())
 	{
 		// Keep the same amount as usual
 		case Difficulty::WALK_IN_THE_PARK:

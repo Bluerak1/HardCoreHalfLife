@@ -357,7 +357,7 @@ void HardCoreStatus::LoadHardCoreConfig()
 				ALERT(at_console, checkpointDebugMsg.c_str());
 
 				// Set the Ammo Difficulty to the one from the file
-				hcConfig.ammoDifficulty = difficultyRepresentation[value];
+				hcConfig.pickupDifficulty = difficultyRepresentation[value];
 			}
 			else if (key == ENEMY_DIFF)
 			{
