@@ -71,7 +71,36 @@ bool CHealthKit::MyTouch(CBasePlayer* pPlayer)
 		return false;
 	}
 
-	if (pPlayer->TakeHealth(gSkillData.healthkitCapacity, DMG_GENERIC))
+	Difficulty pickupDiff = HardCoreStatus::GetAmmoDifficulty();
+
+	float hpMultiplier = 1.0;
+
+	if (pickupDiff == MILD_CHALLENGE)
+	{
+		// On MILD there's a 15% reduction max
+		hpMultiplier = RANDOM_FLOAT(0.85, 1);
+
+		const std::string debugMsg = "HP Pickup reduced by " + std::to_string(hpMultiplier) + "\n";
+		ALERT(at_console, debugMsg.c_str());
+	}
+	else if (pickupDiff == HARD)
+	{
+		// On HARD there's a minimum 15% reduction and max 30%
+		hpMultiplier = RANDOM_FLOAT(0.7, 0.85);
+
+		const std::string debugMsg = "HP Pickup reduced by " + std::to_string(hpMultiplier) + "\n";
+		ALERT(at_console, debugMsg.c_str());
+	}
+	else if (pickupDiff == TRUE_HARDCORE)
+	{
+		// On TRUE_HARDCORE there's a minimum 25% reduction and max 50%
+		hpMultiplier = RANDOM_FLOAT(0.5, 0.75);
+
+		const std::string debugMsg = "HP Pickup reduced by " + std::to_string(hpMultiplier) + "\n";
+		ALERT(at_console, debugMsg.c_str());
+	}
+
+	if (pPlayer->TakeHealth(gSkillData.healthkitCapacity * hpMultiplier, DMG_GENERIC))
 	{
 		MESSAGE_BEGIN(MSG_ONE, gmsgItemPickup, NULL, pPlayer->pev);
 		WRITE_STRING(STRING(pev->classname));

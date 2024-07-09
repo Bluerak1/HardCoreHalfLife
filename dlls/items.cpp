@@ -29,6 +29,7 @@
 #include "items.h"
 #include "gamerules.h"
 #include "UserMessages.h"
+#include "hardcorestatus.h"
 
 class CWorldItem : public CBaseEntity
 {
@@ -219,13 +220,41 @@ class CItemBattery : public CItem
 			return false;
 		}
 
-		if ((pPlayer->pev->armorvalue < MAX_NORMAL_BATTERY) &&
-			pPlayer->HasSuit())
+		if ((pPlayer->pev->armorvalue < MAX_NORMAL_BATTERY) && pPlayer->HasSuit())
 		{
 			int pct;
 			char szcharge[64];
 
-			pPlayer->pev->armorvalue += gSkillData.batteryCapacity;
+			Difficulty pickupDiff = HardCoreStatus::GetAmmoDifficulty();
+
+			float batteryMultiplier = 1.0;
+
+			if (pickupDiff == MILD_CHALLENGE)
+			{
+				// On MILD there's a 15% reduction max
+				batteryMultiplier = RANDOM_FLOAT(0.85, 1);
+
+				const std::string debugMsg = "Battery Pickup reduced by " + std::to_string(batteryMultiplier) + "\n";
+				ALERT(at_console, debugMsg.c_str());
+			}
+			else if (pickupDiff == HARD)
+			{
+				// On HARD there's a minimum 15% reduction and max 30%
+				batteryMultiplier = RANDOM_FLOAT(0.7, 0.85);
+
+				const std::string debugMsg = "Battery Pickup reduced by " + std::to_string(batteryMultiplier) + "\n";
+				ALERT(at_console, debugMsg.c_str());
+			}
+			else if (pickupDiff == TRUE_HARDCORE)
+			{
+				// On TRUE_HARDCORE there's a minimum 25% reduction and max 50%
+				batteryMultiplier = RANDOM_FLOAT(0.5, 0.75);
+
+				const std::string debugMsg = "Battery Pickup reduced by " + std::to_string(batteryMultiplier) + "\n";
+				ALERT(at_console, debugMsg.c_str());
+			}
+
+			pPlayer->pev->armorvalue += gSkillData.batteryCapacity * batteryMultiplier;
 			pPlayer->pev->armorvalue = V_min(pPlayer->pev->armorvalue, MAX_NORMAL_BATTERY);
 
 			EMIT_SOUND(pPlayer->edict(), CHAN_ITEM, "items/gunpickup2.wav", 1, ATTN_NORM);
