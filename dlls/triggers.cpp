@@ -1530,7 +1530,7 @@ void CChangeLevel::ChangeLevelNow(CBaseEntity* pActivator)
 	//	ALERT( at_console, "Level touches %d levels\n", ChangeList( levels, 16 ) );
 
 	// We check if the checkpoint needs to be updated
-	HardCoreStatus::UpdateCheckPointIfNeeded(st_szNextMap);
+	HardCoreStatus::UpdateCheckPointIfNeeded(std::string(st_szNextMap));
 
 	ALERT(at_console, "CHANGE LEVEL: %s %s\n", st_szNextMap, st_szNextSpot);
 	CHANGE_LEVEL(st_szNextMap, st_szNextSpot);

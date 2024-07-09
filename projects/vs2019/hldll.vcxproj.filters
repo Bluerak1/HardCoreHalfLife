@@ -369,6 +369,9 @@
     <ClCompile Include="..\..\dlls\hardcorestatus.cpp">
       <Filter>Source Files\dlls</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\dlls\jackinthebox.cpp">
+      <Filter>Source Files\dlls</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\dlls\doors.h">
@@ -624,6 +627,9 @@
       <Filter>Header Files\public</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dlls\hardcorestatus.h">
+      <Filter>Header Files\dlls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\dlls\bullsquid.h">
       <Filter>Header Files\dlls</Filter>
     </ClInclude>
   </ItemGroup>

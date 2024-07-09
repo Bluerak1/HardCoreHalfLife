@@ -70,7 +70,7 @@ class HardCoreStatus
 		static void UpdateHardCoreStatusFile();
 
 		static void LoadCheckPoint();
-		static void UpdateCheckPointIfNeeded(const std::string& mapName);
+		static void UpdateCheckPointIfNeeded(std::string& mapName);
 		static void GiveCheckpointItemsIfNeeded(CBasePlayer* plr);
 		
 		static void Death();
@@ -87,6 +87,11 @@ class HardCoreStatus
 		static const Difficulty GetAmmoDifficulty()
 		{
 			return hcConfig.ammoDifficulty;
+		}
+
+		static const Difficulty GetEnemyDifficulty()
+		{
+			return hcConfig.enemyDifficulty;
 		}
 
 		static void DisplayMsg(const float textXCoord, const float textYCoord, const float displayTime, const int channel, const std::string& textToDisplay);

@@ -182,14 +182,8 @@ void CGameRules::RefreshSkillData()
 	iSkill = (int)CVAR_GET_FLOAT("skill");
 	g_iSkillLevel = iSkill;
 
-	if (iSkill < 1)
-	{
-		iSkill = 1;
-	}
-	else if (iSkill > 3)
-	{
-		iSkill = 3;
-	}
+	// Difficulty choice is just an illusion, it will always be hard :)
+	iSkill = 3;
 
 	gSkillData.iSkillLevel = iSkill;
 
