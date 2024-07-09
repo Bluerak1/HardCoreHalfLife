@@ -91,6 +91,7 @@ void HardCoreStatus::LoadCheckPoint()
 
 	// If we load a new level we need to re-give the items
 	hcData.hasCheckpointItems = false;
+	hcData.playerDead = false;
 }
 
 /*
@@ -253,10 +254,11 @@ void HardCoreStatus::Death()
 	hcData.isDeathCountDisplayed = false;
 	hcData.isWelcomeMessageDisplayed = false;
 	UpdateHardCoreStatusFile();
-	LoadCheckPoint();
 
 	// If we die we need to re-give the items
 	hcData.hasCheckpointItems = false;
+
+	hcData.playerDead = true;
 }
 
 void HardCoreStatus::GiveCheckpointItemsIfNeeded(CBasePlayer* plr)

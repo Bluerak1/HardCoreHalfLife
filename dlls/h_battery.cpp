@@ -27,6 +27,7 @@
 #include "player.h"
 #include "skill.h"
 #include "gamerules.h"
+#include "hardcorestatus.h"
 
 class CRecharge : public CBaseToggle
 {
@@ -95,6 +96,31 @@ void CRecharge::Spawn()
 	SET_MODEL(ENT(pev), STRING(pev->model));
 	m_iJuice = gSkillData.suitchargerCapacity;
 	pev->frame = 0;
+
+	float randOff = RANDOM_FLOAT(0, 1);
+	Difficulty diff = HardCoreStatus::GetAmmoDifficulty();
+
+	// On mild challenge there's a 20% chance for HP chargers to be off
+	if (diff == MILD_CHALLENGE && randOff < 0.20)
+	{
+		// Turn it off
+		pev->frame = 1;
+		Off();
+	}
+	// On hard there's a 40% chance for HP chargers to be off
+	else if (diff == HARD && randOff < 0.40)
+	{
+		// Turn it off
+		pev->frame = 1;
+		Off();
+	}
+	// On true hardcore there's a 60% chance for HP chargers to be off
+	else if (diff == TRUE_HARDCORE && randOff < 0.60)
+	{
+		// Turn it off
+		pev->frame = 1;
+		Off();
+	}
 }
 
 void CRecharge::Precache()
