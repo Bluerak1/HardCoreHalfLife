@@ -706,8 +706,10 @@ void CBullsquid::HandleAnimEvent(MonsterEvent_t* pEvent)
 void CBullsquid::Spawn()
 {
 	Precache();
-
-	SET_MODEL(ENT(pev), "models/bullsquid.mdl");
+	// TODO: Implement spawn chance based on set MONSTER difficulty
+	//Difficulty monsterDiff = HardCoreStatus::getMonsterDifficulty();
+	//RANDOM_FLOAT(0, 1) > 0.49 ? SET_MODEL(ENT(pev), "models/bullsquid.mdl") : SET_MODEL(ENT(pev), "models/bullsquid-hc.mdl");
+	SET_MODEL(ENT(pev), "models/bullsquid-hc.mdl");
 	UTIL_SetSize(pev, Vector(-32, -32, 0), Vector(32, 32, 64));
 
 	pev->solid = SOLID_SLIDEBOX;
@@ -730,6 +732,8 @@ void CBullsquid::Spawn()
 void CBullsquid::Precache()
 {
 	PRECACHE_MODEL("models/bullsquid.mdl");
+	// Might not be the most effective to precache both models, as there might be a more clever way
+	//PRECACHE_MODEL("models/bullsquid-hc.mdl");
 
 	PRECACHE_MODEL("sprites/bigspit.spr"); // spit projectile.
 
