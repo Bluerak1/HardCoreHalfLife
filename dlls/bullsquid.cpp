@@ -16,18 +16,9 @@
 // bullsquid - big, spotty tentacle-mouthed meanie.
 //=========================================================
 
-#include "extdll.h"
-#include "util.h"
-#include "cbase.h"
-#include "monsters.h"
-#include "schedule.h"
-#include "nodes.h"
-#include "effects.h"
-#include "decals.h"
-#include "soundent.h"
-#include "game.h"
-#include <time.h>
-#include <string>
+#include "bullsquid.h"
+#include "hardcorestatus.h"
+
 
 #define SQUID_SPRINT_DIST 256 // how close the squid has to get before starting to sprint and refusing to swerve
 
@@ -94,9 +85,39 @@ void CSquidSpit::Spawn()
 
 	SET_MODEL(ENT(pev), "sprites/bigspit.spr");
 	pev->frame = 0;
-	pev->scale = 0.5;
 
-	UTIL_SetSize(pev, Vector(0, 0, 0), Vector(0, 0, 0));
+	Difficulty enemyDiff = HardCoreStatus::GetEnemyDifficulty();
+
+	int sizeMultiplier = 0.5;
+	Vector min = Vector(0, 0, 0);
+	Vector max = Vector(0, 0, 0);
+
+	float randFloat = RANDOM_FLOAT(0, 1);
+
+	// On Hard there's a 50% chance for a bigger spit
+	if (enemyDiff == HARD && randFloat < 0.50)
+	{
+		ALERT(at_console, "Bullchicken spit bigger! HARD diff");
+		sizeMultiplier = 2;
+		min = Vector(-28, -28, 0);
+		max = Vector(28, 28, 28);
+	}
+	// On HardCore there's a 80% chance for a bigger spit
+	else if (enemyDiff == TRUE_HARDCORE && randFloat < 0.80)
+	{
+		ALERT(at_console, "Bullchicken spit bigger! HARDCORE diff");
+		sizeMultiplier = 2;
+		min = Vector(-28, -28, 0);
+		max = Vector(28, 28, 28);
+	}
+
+	pev->scale = sizeMultiplier;
+
+	// This is some black magic s*** right here
+	// This basically sets the "Hitbox" for the entity but I have no idea if this is right, it seemed OK in testing
+	// The problem is "scale" (i.e. model scale) and the hitbox are completely different things and we somehow need to match the two together
+	// More info: https://developer.valvesoftware.com/wiki/Bounding_box
+	UTIL_SetSize(pev, min, max);
 
 	m_maxFrame = (float)MODEL_FRAMES(pev->modelindex) - 1;
 }
@@ -120,7 +141,36 @@ void CSquidSpit::Shoot(entvars_t* pevOwner, Vector vecStart, Vector vecVelocity)
 	pSpit->Spawn();
 
 	UTIL_SetOrigin(pSpit->pev, vecStart);
-	pSpit->pev->velocity = vecVelocity;
+
+	Difficulty enemyDiff = HardCoreStatus::GetEnemyDifficulty();
+
+	int speedMultiplier = 1;
+
+	float randFloat = RANDOM_FLOAT(0, 1);
+
+	// On MILD_CHALLENGE there's a 30% chance for a faster spit
+	// And it becomes 1.8-2 times faster
+	if (enemyDiff == MILD_CHALLENGE && randFloat < 0.30)
+	{
+		ALERT(at_console, "Bullchicken spit faster! MILD_CHALLENGE diff");
+		speedMultiplier = RANDOM_FLOAT(1.8, 2);
+	}
+	// On Hard there's a 50% chance for a faster spit
+	// And it becomes 2-2.5 times faster
+	else if (enemyDiff == HARD && randFloat < 0.50)
+	{
+		ALERT(at_console, "Bullchicken spit faster! HARD diff");
+		speedMultiplier = RANDOM_FLOAT(2, 2.5);
+	}
+	// On HardCore there's a 75% chance for a faster spit
+	// And it becomes 2-4 times faster
+	else if (enemyDiff == TRUE_HARDCORE && randFloat < 0.75)
+	{
+		ALERT(at_console, "Bullchicken spit faster! TRUE_HARDCORE diff");
+		speedMultiplier = RANDOM_FLOAT(2, 4);
+	}
+
+	pSpit->pev->velocity = vecVelocity * speedMultiplier;
 	pSpit->pev->owner = ENT(pevOwner);
 
 	pSpit->SetThink(&CSquidSpit::Animate);
@@ -201,45 +251,6 @@ void CSquidSpit::Touch(CBaseEntity* pOther)
 #define BSQUID_AE_HOP (5)
 #define BSQUID_AE_THROW (6)
 
-class CBullsquid : public CBaseMonster
-{
-public:
-	void Spawn() override;
-	void Precache() override;
-	void SetYawSpeed() override;
-	int ISoundMask() override;
-	int Classify() override;
-	void HandleAnimEvent(MonsterEvent_t* pEvent) override;
-	void IdleSound() override;
-	void PainSound() override;
-	void DeathSound() override;
-	void AlertSound() override;
-	void AttackSound();
-	void StartTask(Task_t* pTask) override;
-	void RunTask(Task_t* pTask) override;
-	bool CheckMeleeAttack1(float flDot, float flDist) override;
-	bool CheckMeleeAttack2(float flDot, float flDist) override;
-	bool CheckRangeAttack1(float flDot, float flDist) override;
-	void RunAI() override;
-	bool FValidateHintType(short sHint) override;
-	Schedule_t* GetSchedule() override;
-	Schedule_t* GetScheduleOfType(int Type) override;
-	bool TakeDamage(entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType) override;
-	int IRelationship(CBaseEntity* pTarget) override;
-	int IgnoreConditions() override;
-	MONSTERSTATE GetIdealState() override;
-
-	bool Save(CSave& save) override;
-	bool Restore(CRestore& restore) override;
-
-	CUSTOM_SCHEDULES;
-	static TYPEDESCRIPTION m_SaveData[];
-
-	bool m_fCanThreatDisplay; // this is so the squid only does the "I see a headcrab!" dance one time.
-
-	float m_flLastHurtTime; // we keep track of this, because if something hurts a squid, it will forget about its love of headcrabs for a while.
-	float m_flNextSpitTime; // last time the bullsquid used the spit attack.
-};
 LINK_ENTITY_TO_CLASS(monster_bullchicken, CBullsquid);
 
 TYPEDESCRIPTION CBullsquid::m_SaveData[] =

@@ -1,0 +1,12 @@
+#include "extdll.h"
+#include "util.h"
+#include "cbase.h"
+#include "monsters.h"
+#include "schedule.h"
+#include "nodes.h"
+#include "effects.h"
+#include "decals.h"
+#include "soundent.h"
+#include "game.h"
+#include <time.h>
+#include <string>

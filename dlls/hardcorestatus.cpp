@@ -97,7 +97,7 @@ void HardCoreStatus::LoadCheckPoint()
  * This function will check if we need to update the last checkpoint
  * i.e. if the player passed through a certain level that a new checkpoint needs to be stored
  */
-void HardCoreStatus::UpdateCheckPointIfNeeded(const std::string& mapName)
+void HardCoreStatus::UpdateCheckPointIfNeeded(std::string& mapName)
 {
 	// If the map we transitioned to is the same as our checkpoint we do nothing
 	if (mapName == hcData.lastCheckpoint) {
@@ -106,7 +106,7 @@ void HardCoreStatus::UpdateCheckPointIfNeeded(const std::string& mapName)
 
 	// Check if the map we transitioned to is a checkpoint
 	// Check if our checkpoint difficulty is ON or BELOW the checkpoint's difficulty, if yes we save the checkpoint!
-	if (hcConfig.checkpointDifficulty <= checkpointMap[mapName].first)
+	if (checkpointMap.find(mapName) != checkpointMap.end() && hcConfig.checkpointDifficulty <= checkpointMap[mapName].first)
 	{
 		const std::string ckpDebugMsg = "Player transitioned to " + mapName + " this is a checkpoint.\n";
 		ALERT(at_console, ckpDebugMsg.c_str());
