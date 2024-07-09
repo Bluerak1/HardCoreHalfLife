@@ -97,7 +97,7 @@ class HardCoreStatus
 			return hcConfig.enemyDifficulty;
 		}
 
-		// This will only be false if player died
+		// This will only be true if player died
 		static const bool IsPlayerDead()
 		{
 			return hcData.playerDead;
